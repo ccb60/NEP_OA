@@ -1,7 +1,14 @@
 ---
 title: "Combine OA Data From Three NEPs"
-output: html_notebook
+output:
+  html_document:
+    df_print: paged
 ---
+
+<img
+    src="https://www.cascobayestuary.org/wp-content/uploads/2014/04/logo_sm.jpg"
+    style="position:absolute;top:10px;right:50px;" />
+
 
 # Load Libraries
 ```{r}
@@ -14,7 +21,7 @@ library(CBEPgraphics)
 load_cbep_fonts()
 ```
 
-
+# Load Casco Bay Data
 ```{r}
 CBData <- read_csv("CascoBayOAData.csv") %>%
   select(-SBE37_CON,
@@ -36,7 +43,8 @@ CBData <- read_csv("CascoBayOAData.csv") %>%
   )
 ```
 
-## Establish Folder References
+# Load Data from Other NEPs
+## Establish Folder Reference
 ```{r}
 sibfldnm <- 'Original Data'
 parent   <- dirname(getwd())
@@ -46,7 +54,7 @@ fn    <- 'TampaBay_CoastalBendaBays_ExampleData.csv'
 fpath <- file.path(sibling,fn)
 ```
 
-# Load Data from Other NEPs
+## Actually Load the Data
 ```{r} 
 TBAndCBBData <- read_csv(fpath,
                             col_types = cols(DO = col_double())) %>%

@@ -1,6 +1,8 @@
 ---
 title: "Review and Cleaning of Casco Bay OA Data"
-output: html_notebook
+output:
+  html_document:
+    df_print: paged
 ---
 
 # Load Libraries
@@ -25,14 +27,24 @@ sibling  <- file.path(parent,sibfldnm)
 ```
 
 
-# Load data from identical excel spreadsheets
+# Load Data
+From similar excel spreadsheets.
+
+This code originally generated a lot of warnings because the second row of each
+spreadsheet contains the units used.  Since R is looking for numeric data, it
+gets confused. There is a solution -- to read just the data header from the
+first file, then read data from all the files skipping the first two rows -- but
+it is simpler to just use "suppressWarnings" to silence the (now expected)
+warnings.  However this suppresses ALL warnings, including new ones that you may
+need to see.  If something is not working, remove the call to suppressWarnings
+and see if the resulting warnings help identify the problem.
 ```{r}
 the_data <- list()
 for (yr in c(2015, 2016, 2017, 2018)) {
   fn <- paste0('CascoBay_lvl3_',  yr ,'.xls')
   fpath <- file.path(sibling,fn)
-  df <- read_excel(fpath, col_types = 'numeric',
-                   sheet = 'Data')[-1,] %>%  # dropping garbage second line
+  suppressWarnings(df <- read_excel(fpath, col_types = 'numeric',
+                   sheet = 'Data')[-1,])  %>%  # dropping garbage second line
   select(- contains('_min')) %>%
   select(- contains('_mean')) %>%
   select(- contains('_max')) %>%
@@ -40,7 +52,7 @@ for (yr in c(2015, 2016, 2017, 2018)) {
   n <- names(df)
   n <- sub('_median', '', n)
   names(df) <- n
-  the_data <- append(the_data, list(df))  #  add datframe to a list of dataframes. 
+  the_data <- append(the_data, list(df))  #  add dataframe to a list of dataframes. 
 }
 ```
 
@@ -87,7 +99,7 @@ pH values look suspect, especially in 2017.  In addition, any pH measurements
 associated with calculated alkalinity below about 1000 should be considered
 highly suspect, since low alkalinity is unlikely at high salinity.
 
-We expolore these problems graphically.
+We explore these problems graphically.
 
 ## Graph of pH data over time
 ```{r}
@@ -174,7 +186,7 @@ plt
 ```
 
 That shows a low pH period, in September around end of September 8 through Sept
-14.  That one may actually have started just befor the data gap, around August
+14.  That one may actually have started just before the data gap, around August
 17th and another around September 30 through October 11.  The exact period we
 should remove from the data here is somewhat arbitrary.  Since the primary
 indicator of problematic data is the low observed pH value, we risk biasing
@@ -213,7 +225,7 @@ We are still left with some low values, but the  really wonky sudden pH changes 
 removed. 
 
 # Remove Unwanted Data
-TO trim the data, we use the flags to set to NA any variables that depend on accurate
+To trim the data, we use the flags to set to NA any variables that depend on accurate
 pH values, and then toss out any data that lacks remaining valid observations.
 ```{r}
 trimmed_data <- the_data %>%

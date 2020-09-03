@@ -6,32 +6,57 @@
 
 Preliminary analysis of Ocean Acidification Data From Multiple National Estuary Programs
 
+Casco Bay Estuary Partnership (CBEP) staff was involved with a project to look
+at carbonate chemistry parameters from several National Estuaries,including
+CBEP.  THe project we being led principally by Nick Rosenau, of the U.S.
+Environmental Protection Agency, in Washington D.C.  The effort has produuced 
+a draft scientific paper, which will be submitted for publication soon
+(fall 2020).
+
+The files included in this Github repository were part of CBEP's effort to
+explore analytic methods and graphics for the scientific paper. 
+
+These files were all "preliminary" in the sense that they were part of our
+efforts to improve our understanding of carbonate chemistry, explore analytic
+methods, or look at  ideas for graphic presentation of results. None of the code
+included here was used to produce final graphics or figures for the paper.
+
 # Statement of Purpose
-CBEP is committed to the ideal of open science.  Our data
-archives ensure our science is documented and reproducible by others. The purpose of these archives is to release raw data and data analysis code whenever possible to allow others to review, critique, learn from, and build upon CBEP science.
+CBEP is committed to the ideal of open science.  Our data archives ensure our
+science is documented and reproducible by others. The purpose of these archives
+is to release raw data and data analysis code whenever possible to allow others
+to review, critique, learn from, and build upon CBEP science.
 
 # Archive Structure
- CBEP data analysis repositories are divided into from two
- to four sub-folders.  All archives contain at least an "Original_Data" and a
- "Graphics" folder.  The other two folders are included as
- necessary.
+ CBEP data analysis repositories are usually divided into from two to four
+ sub-folders.
 
 - Original Data.  Original data, with a "DATA_SOURCES.md" or "READ ME.txt" file
-that documents data sources.
-**DATA IN THIS FOLDER IS AS ORIGINALLY PROVIDED OR ACCESSED.** 
+that documents data sources. *DATA IN THIS FOLDER IS AS ORIGINALLY PROVIDED.* 
 
-- Derived Data.  Data derived from the original raw data.  Includes
-documentation of data reorganization steps, either in the form of files (R
-notebooks, Excel files, etc.) that embody data transformations, or via another
-README.txt file.
+- **Derived Data**.  Data derived from the original raw data.  Includes R
+notebooks that embody data transformation and reorganization, along with CSV
+files containing data used elsewhere in the repository.
 
-- Analysis.  Contains one or more R Notebooks proceeding through the data
-analysis steps.  
+- **Complete NEP Data**.  Contains data from all NEPs included in the study, as well
+as code to separate ehat file into smaller files, and a long R Markdown
+file documenting our current understanding of temperature dependence of pCO~2~.
+The R Markdown document produced a PDF summary, also stored here.
 
-- Graphics.  Contains R Notebooks stepping through development of related
-graphics, and also raw copies of resulting graphics, usually in \*.png and
-\*.pdf formats.  These graphics may differ from graphics as they appear in final
-State of the Bay graphical layouts.
+- **Analysis**.  Contains R Notebooks proceeding through one approach to analysis
+of pCO~2~ data using generalized additive mixed models (GAMMs).  GAMMs are well
+suited to this problem, as they easily integrate non-linear terms, and properly
+address the high serial autocorrelation common in data from automated sensors.
+FIles presented here walk through a simplified GAMM analyses of pCO~2~ data. 
+The files are a subset of analyses we conducted. Other analyses follow similar
+methods, looking at differnet dependent variables (temperature corrected pCO~2~
+and pH) and more complex models incorporating a richer set of nonlinear and 
+interaction terms.  Additional analysis examples can be found in our CBEP_OA
+Github repository.
+
+-  **Analysis_Daily**.  Contains files related to analysis of, or preparation of
+graphics from, daily summaries of hourly pCO~2~ and pH data.  Analysis and
+graphics focus on diurnal range and daily medians.
 
 # Summary of Data Sources
 Data was either derived from CBEP OA data analyzed as part of our 2020 State of

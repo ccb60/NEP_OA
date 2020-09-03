@@ -1,5 +1,5 @@
 ---
-title: "Diurnal Patterns of pCO~2~ and pHs"
+title: "Diurnal Patterns of pCO~2~ and pH"
 author: Curtis C. Bohlen, Casco Bay Estuary Partnership
 date: September 2, 2020
 output:
@@ -14,10 +14,9 @@ output:
     style="position:absolute;top:10px;right:50px;" />
 
 # Introduction
-This R Notebook develops graphic ideas for looking at pH and pCO~2~ data, principally
+This R Notebook develops graphic ideas for looking at pH and pCO~2~ data, using data
 from CBEP.  This is for demonstration purposes, and to help develop ideas for graphics
-and statistical methods. The goal here is to look at seasonal and diurnal patterns,
-without closely examining correlations with other predictors.
+and statistical methods.
 
 # Load Libraries
 ```{r}
@@ -45,7 +44,7 @@ fpath <- file.path(sibling,fn)
 all_data <- read_csv(fpath) %>% select(-X1)
 ```
 
-# Summarize Casco Bay data by days
+# Summarize Casco Bay Data by Days
 The first step is to extract data  by the day, so we can look at daily medians,
 ranges, IQRs and 90% ranges.
 
@@ -71,7 +70,8 @@ daily_data <- all_data %>%
          )
 ```
 
-# Preliminary Graphic
+# Preliminary Graphics
+## Boxplot
 ```{r}
 plt <- daily_data %>%
   select_at(vars(contains('CO2'), dd, doy, mm, Month, yyyy)) %>%
@@ -83,7 +83,7 @@ plt <- daily_data %>%
 plt
 ```
 
-# Diurnal Range by Median
+## Diurnal Range by Median
 ```{r}
 tmp <- daily_data %>%
   select_at(vars(CO2_m,CO2_r, dd, doy, mm, Month, yyyy)) %>%
@@ -97,7 +97,7 @@ geom_smooth(se=FALSE) +
 plt
 ```
 
-# Diurnal Range by Temperature and Month
+## Diurnal Range by Temperature and Month
 ```{r}
 tmp <- daily_data %>%
   select(Temp_m, DO_m, CO2_m, CO2_r, dd, doy, mm, yyyy) %>%
@@ -111,7 +111,8 @@ plt <- ggplot(tmp, aes(Temp_m, CO2_r)) +
   xlab('Daily Median Temperature (C)')
 plt
 ```
-# Daily Median CO~2~ versus Oxygen
+
+## Daily Median CO~2~ versus Oxygen
 ```{r}
 plt <- ggplot(tmp, aes(DO_m, CO2_m)) +
   geom_point(aes(color = Month)) +

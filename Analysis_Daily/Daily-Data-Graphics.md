@@ -1,4 +1,4 @@
-Diurnal Patterns of pCO<sub>2</sub> and pHs
+Diurnal Patterns of pCO<sub>2</sub> and pH
 ================
 Curtis C. Bohlen, Casco Bay Estuary Partnership
 September 2, 2020
@@ -8,12 +8,15 @@ September 2, 2020
   - [Load Data](#load-data)
       - [Establish Folder References](#establish-folder-references)
       - [Look Up Data](#look-up-data)
-  - [Summarize Casco Bay data by
-    days](#summarize-casco-bay-data-by-days)
-  - [Preliminary Graphic](#preliminary-graphic)
-  - [Diurnal Range by Median](#diurnal-range-by-median)
-  - [Diurnal Range by Temperature and
-    Month](#diurnal-range-by-temperature-and-month)
+  - [Summarize Casco Bay Data by
+    Days](#summarize-casco-bay-data-by-days)
+  - [Preliminary Graphics](#preliminary-graphics)
+      - [Boxplot](#boxplot)
+      - [Diurnal Range by Median](#diurnal-range-by-median)
+      - [Diurnal Range by Temperature and
+        Month](#diurnal-range-by-temperature-and-month)
+      - [Daily Median CO<sub>2</sub> versus
+        Oxygen](#daily-median-co2-versus-oxygen)
 
 <img
     src="https://www.cascobayestuary.org/wp-content/uploads/2014/04/logo_sm.jpg"
@@ -22,10 +25,9 @@ September 2, 2020
 # Introduction
 
 This R Notebook develops graphic ideas for looking at pH and
-pCO<sub>2</sub> data, principally from CBEP. This is for demonstration
+pCO<sub>2</sub> data, using data from CBEP. This is for demonstration
 purposes, and to help develop ideas for graphics and statistical
-methods. The goal here is to look at seasonal and diurnal patterns,
-without closely examining correlations with other predictors.
+methods.
 
 # Load Libraries
 
@@ -89,7 +91,7 @@ all_data <- read_csv(fpath) %>% select(-X1)
     ##   pH = col_double()
     ## )
 
-# Summarize Casco Bay data by days
+# Summarize Casco Bay Data by Days
 
 The first step is to extract data by the day, so we can look at daily
 medians, ranges, IQRs and 90% ranges.
@@ -116,7 +118,9 @@ daily_data <- all_data %>%
          )
 ```
 
-# Preliminary Graphic
+# Preliminary Graphics
+
+## Boxplot
 
 ``` r
 plt <- daily_data %>%
@@ -131,7 +135,7 @@ plt
 
 ![](Daily-Data-Graphics_files/figure-gfm/unnamed-chunk-5-1.png)<!-- -->
 
-# Diurnal Range by Median
+## Diurnal Range by Median
 
 ``` r
 tmp <- daily_data %>%
@@ -150,7 +154,7 @@ plt
 
 ![](Daily-Data-Graphics_files/figure-gfm/unnamed-chunk-6-1.png)<!-- -->
 
-# Diurnal Range by Temperature and Month
+## Diurnal Range by Temperature and Month
 
 ``` r
 tmp <- daily_data %>%
@@ -169,7 +173,8 @@ plt
     ## `geom_smooth()` using method = 'loess' and formula 'y ~ x'
 
 ![](Daily-Data-Graphics_files/figure-gfm/unnamed-chunk-7-1.png)<!-- -->
-\# Daily Median CO<sub>2</sub> versus Oxygen
+
+## Daily Median CO<sub>2</sub> versus Oxygen
 
 ``` r
 plt <- ggplot(tmp, aes(DO_m, CO2_m)) +
