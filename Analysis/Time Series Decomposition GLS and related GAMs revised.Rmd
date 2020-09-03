@@ -1,0 +1,553 @@
+---
+title: "Time Series Analysis of Uncorrected pCO~2~ data"
+author: Curtis C. Bohlen, Casco Bay Estuary Partnership
+date: September 2, 2020
+output:
+  github_document:
+    toc: true
+    fig_width: 7
+    fig_height: 5
+---
+
+<img
+    src="https://www.cascobayestuary.org/wp-content/uploads/2014/04/logo_sm.jpg"
+    style="position:absolute;top:10px;right:50px;" />
+
+# Introduction
+This R Notebook looks at preliminary models for analyzing pCO~2~ data from CBEP.
+
+Our principal goal is to determine how best to model time dependence of PCO~2~
+values.  Once we settle on an approach to modeling time dependence in GAMS, we
+will compare results with the results from methods piloted by EPA.
+
+Because our long-term interest is in comparing "what appears to be most
+important" for predicting carbonate chemistry at multiple NEPs, we need to
+explore the same model space for all NEPs.  We probe alternate model structures
+for CBEP as a way to determine whether conclusions are sensitive to model
+specification.
+
+Conceptually, the model space we are exploring includes associations between
+dependent variables and:  
+*  Temperature  
+*  Salinity  
+*  Dissolved Oxygen  
+
+But things are more complicated than that suggests.  
+1.  Relationships (for any or all of these three predictors) may be non-linear.  
+2.  Interactions between predictors are possible (although their meaning may not
+be clear).  
+3.  Strong temporal structure (diurnal; seasonal; possibly tidal; serial
+autocorrelation) in both dependent and independent variables will obscure or
+confound simple relationships.
+
+## Proposed Models
+This suggests we need to fit generalized additive models (GAMs), with
+autocorrelated errors.  There are many possible models that could address our
+needs.  We fit three classes of models.
+
+
+## Model 1 and 2
+The models  are of the following form:
+1.  Adjust for time of year using a categorical variable.
+2.  Adjust for time of day using a periodic smoothing function. 
+3.  Fit the three quantitative predictors as linear terms.
+4.  Include an autoregressive error term of order one.
+
+$$y_{t} = \mu + \mu_{m} +\beta_{1}c_{h}(h) + \beta_{2}T +\beta_{3}S + \beta_{4}D + \gamma  * \epsilon_{t-1} + \epsilon_{t}$$
+Where:  
+*  $y_{t}$ is the dependent time series, here pCO~2~.  
+*  $T$, $S$, and $D$, are Temperature, Salinity, and Dissolved Oxygen.  
+*  $m$ represents the month (of the year).  
+*  $h$ designates the hour of the day.  
+*  $\mu$ is an overall mean.
+*  $\mu_{m}$ are (eleven) fitted deviations from that mean by month of the year.
+To avoid an overspecified linear model, R uses January as the reference level here.
+This set of elelven linear coeficients models seasonality.  
+*  $c_{h}(h)$ is a periodic diurnal smoothing function. This models
+diurnal patterns.  
+*  $\beta_{i}$ represent (linear) regression coefficients.  
+*  $\gamma$ represents the correlation with the error of the prior
+observation.  
+*  $\epsilon_{t}$ is a sequence of "innovations" or errors.  
+
+The difference between the first two models lies the form of the diurnal
+smoothing function, which is either constructed from two $sine$ and two $cosine$
+terms (and fit with $gls()$) or fit using a cyclic cubic spline function through
+$gamm()$.
+
+### Model 3
+The third model fits a smoothing function for month instead of fitting a
+categorical adjustment to the mean for each month.
+
+$$y_{t} = \mu + \beta_{0}c_{m}(m)+\beta_{1}c_{h}(h) + \beta_{2}T +\beta_{3}S + \beta_{4}D + \gamma \epsilon_{t-1} + \epsilon_{t}$$
+Where terms have the same meaning as before and
+*  $\mu$ is an overall mean.
+*  $c_{m}(m)$ is a smoothing function for time of year by month.
+
+### Model 4
+The fourth model addresses seasonality not on a month by month basis,
+but on a day by day basis.
+
+$$y_{t} = \mu + \beta_{0}c_{d}(d)+\ +\beta_{1}c_{h}(h) + \beta_{2}T +\beta_{3}S + \beta_{4}D + \gamma \epsilon_{t-1} + \epsilon_{t}$$
+where  
+*  $d$ indexes the day of the year, also known as the Julian day.  
+*  $c_{d}(d)$ is a seasonal smoothing function  
+
+
+### Model 5
+The final model, fits a two dimensional temporal smoothing function that
+in practice allows the diurnal pattern of pCO~2~ to vary by time of year. 
+
+$$y_{t} = \mu + \beta_{1}c_{dh}(d,h) + \beta_{2}T +\beta_{3}S + \beta_{4}D + \gamma \epsilon_{t-1} + \epsilon_{t}$$
+where   
+*  $c_{dh}(d,h)$ is a two dimensional smoothing function (cyclic cubic spline)
+based on time of day and time of year.
+
+In practice, this final model's periodic smoothing function will be fit in
+three parts, $C_{d}(d)$, $C_{h}(h))$, and $c_{d,h}(d,h)$.  That allows a formal test
+of whether the two dimensional smoother is necessary.  It is, and with all three
+terms in the model, it is equivalent to fitting a single two dimensional
+smoother.
+
+##Proposed Modelling Strategy 
+We can begin to fit simplified linear models with GLS, to explore
+autocorrelation of errors, and confirm that an corAR1() error structure is
+appropriate. We then move on to GAMs.
+
+# Load Libraries
+```{r}
+library(tidyverse)
+library(readxl)
+library(CBEPgraphics)
+
+library(nlme)      # includes gls function
+#library(zoo)       # assists with time series calculations 
+#library(lubridate) # simplifies management of date and time objects
+
+library(mgcv)      # One of two common libraries for general additive models.
+                   # Function gamm allows autocorrelation.
+                   # plot allows examination of GAM fit components
+
+library(emmeans)   # Provides tools for calculating marginal means
+library(ggeffects) # provides access functions to emmeans that return tidy tibbles and facilitate plots
+
+library(broom)     # Allows ready conversion to tidy tibbles
+```
+
+# Load Data 
+## Establish Folder References
+```{r}
+sibfldnm <- 'Complete NEP Data'
+parent   <- dirname(getwd())
+sibling  <- file.path(parent,sibfldnm)
+
+fn    <- 'CB_oa_data.csv'
+fpath <- file.path(sibling,fn)
+```
+## Initiailze fonts
+```{r}
+load_cbep_fonts()
+```
+
+## Look Up Data
+```{r} 
+the_data <- read_csv(fpath) %>% select(-X1) %>% select(-WaterBody) %>%
+  rename_at(vars(contains('_meas')), list(~str_replace(., '_meas','')))  %>%
+  rename_all(tolower) %>%
+  rename(co2_corr = co2_tcorr12) %>%
+  mutate(yyyy = as.numeric(format(datetime, format = '%Y')),
+         mm   = as.numeric(format(datetime, format = '%m')),
+         dd   = as.numeric(format(datetime, format = '%d')),
+         hh   = as.numeric(format(datetime, format = '%H')),
+         doy  = as.numeric(format(datetime, format = '%j'))
+         )
+```
+
+# Correcting Time Series
+Most modeling functions in R, when applied to time series, assume you are
+working with a complete regular time series, and thus do not always correctly
+calculate autocorrelations, especially around dates and times omitted from the
+data.
+
+(You can, in part get around this with in corAR1() by specifying form= ~datetime).
+
+Sevreral highly regarded packages, including $zoo$ and $xts$ provide tools to address
+the same problem, but I have little experience with them and I have found that
+they do not always behave as I expect.
+
+So our first step is to rectify our time series.  We do this in two steps.
+First, we creat a "complete" data set, with NAs added as necessary to fill all
+time steps.  Second, to save space, we toss out any date or time too far from
+"real" data to affect our models.  Here we plan only to use lag 1 or perhaps lag
+2 models, so we don't need dates and times more than one or two steps (hours)
+away from real data.
+
+## Check that timestamps are consistent 
+For this to work, all time stamps have to be rounded to the same time
+boundaries, here each hour on the hour. We can check that by looking at the
+"minute" value form each datetime value.
+```{r}
+range(as.numeric(format(the_data$datetime, format = '%M')), na.rm=TRUE)
+```
+Oh oh....  Some timestamps are on the half hour.  All are from late in 2018.
+We round them down to the next lowest full hour. 
+
+```{r}
+the_data <- the_data %>%
+  mutate(datetime = as.POSIXct(paste0(yyyy, '-', mm, '-', dd, ' ', hh, ':00'),
+                               format='%Y-%m-%d %H:%M'))
+
+```
+
+## Create a Data Frame containing all hourly time stamps    
+```{r}
+firstdt <- min(the_data$datetime, na.rm = TRUE)
+lastdt  <- max(the_data$datetime, na.rm = TRUE)
+alldt <- tibble(datetime =seq(firstdt, lastdt, "hour"))
+range(alldt$datetime)
+```
+## Use left_join to merge data into that dataframe
+And regenerate the timestamps.
+```{r}
+full_data <- left_join(alldt, the_data, by='datetime') %>%
+  select(-yyyy, -dd, -hh, -doy) %>%
+  mutate(yyyy = as.numeric(format(datetime, format = '%Y')),
+         mm   = as.numeric(format(datetime, format = '%m')),
+         dd   = as.numeric(format(datetime, format = '%d')),
+         hh   = as.numeric(format(datetime, format = '%H')),
+         doy  = as.numeric(format(datetime, format = '%j'))
+         )
+rm(alldt, firstdt, lastdt, the_data)
+```
+
+## Now delete unnecessary "blank" lines
+We want to identify lines to drop.  Any datetime line that is more than
+two hours away from "real data" can be dropped.
+
+However, we need to recognize that for model comparison, each model must be
+fitted to the same data. For legitimate model comparison, all models must also
+be built with ML, not REML methods. Once an optimal model is selected, it can be
+refit with REML.
+
+```{r}
+full_data <- full_data %>%
+  # First we identify lines that have complete data EITHER for pH or pCO2
+  # We need all three predictors and either pH or pCO2.
+  mutate(has_data = ! (is.na(temp) | is.na(sal) | is.na(do)) & 
+                    ! (is.na(co2)   & is.na(ph))) %>%
+  # Then create a shifted version of that data
+  # I specify dplyr because dplyr and base lag functions work differently
+  mutate(next_has_data = dplyr::lead(has_data),  
+         after_has_data = dplyr::lead(has_data,2)) %>%
+  filter(has_data | next_has_data | after_has_data) %>%
+  select (-has_data, -next_has_data, -after_has_data) %>%
+  mutate(Month = factor(mm, levels = 1:12, labels = month.abb) ) %>%
+  mutate(Hour = factor (hh, levels = 0:23))
+``` 
+# Data Analysis
+# Explore autocorrelations structure
+We can now look at autocorrelation and crosscorrelaiton structure. However,
+these analysis don'thandle seasonal patterns or winter data gaps correctly.
+These are preliminary analyses only.
+
+```{r}
+oldpar <- par(mfrow=c(2,3), mar = c(1,2,3,1))
+acf(full_data$temp, main = 'Temp', na.action= na.pass)
+acf(full_data$sal, main='Salinity', lag.max=100, na.action= na.pass)
+acf(full_data$do, main = 'DO', na.action= na.pass)
+acf(full_data$co2, main='CO2', lag.max=100, na.action=na.pass)
+acf(full_data$ph, main = 'pH', na.action= na.pass)
+par(oldpar)
+```
+
+So, autocorrelations are uniformly high, and salinity and CO2 show strong
+periodic trends -- probably mostly diurnal or tidal.
+
+```{r}
+oldpar <- par(mfrow=c(2,3), mar = c(1,2,3,1))
+pacf(full_data$temp, main = 'Temp', na.action= na.pass)
+pacf(full_data$sal, main='Salinity', lag.max=100, na.action= na.pass)
+pacf(full_data$do, main = 'DO', na.action= na.pass)
+pacf(full_data$co2, main='CO2', lag.max=100, na.action=na.pass)
+pacf(full_data$ph, main = 'pH', na.action= na.pass)
+par(oldpar)
+rm(oldpar)
+```
+
+So, a simple autoregressive error function will help, but there is more structure
+here.  That structure appears to be both diurnal and tidal.
+
+# Initial Model
+Here I fit a couple of models using GLS or GAMM functions.  These only fit
+linear terms relating the predictors to the OA parameters.  This is an over
+simplification, but a useful starting point for understanding data structure.
+
+Note here I only fit linear predictors, other than for time of day.
+
+## Dealing with Large Models and Slow Calculations
+Many of hte models I explored took too much memory and either failed to run, or
+took a very long time.   The problem appears to be a shortage of working memory,
+as it sometimes offered a warning about not being able to allocate enough
+memory.  This problem was severe on my work computer, and less so on my home
+computer, which has many fewer services running in the background.
+
+I use a number of tricks to reduce the memory footprint of R, but they are of
+limited value, presumably because the GLS model I generate are very large.  
+
+The most important step is to start each calculation without other large
+objects in memory.  In particular,  model objects in R usually retain a full
+copy of their underlying data, as well as some intermediate data structures
+(like variance-covariance matrices) that can also be quite big.
+
+Here I also fit a more efficient model that fits a periodic function for time of day.
+But I STILL ran into memory problems.  Presumably, the problem is that the full
+data for CBEP is huge.  By default, R holds objects entirely in memory.  A lot
+of searching online failed to find a ready way to run gls or gam using tools that
+swap portions of the data into and out of working memory (e.g. package ff).
+
+I have also learned that the way you specify the autocorrelation structure in these
+models has a large impact on running time.  
+
+If these models fail to run, it should be possible to separate the model into time series
+and non-time series components, as Nick's statistician friend did.  But that fits a
+fundamentally different model, and one that I have some reservations about
+because of how it handles co-variation of dependent and independnet variables at
+different temporal scales.
+
+Finally, I have learned to save the results of these long-running calculation so I
+can reload them rather than recaclulate them.  R Markdown includes an option to
+"cache" the results of code blocks. That is quick and efficient.  If you want more 
+control, and can remember to recalculate results when you change data, code, or data
+preparation, you can do it by hand (as here) with save(RDS(). 
+
+I also save these results here so I can run model comparisons in a separate R Markdown
+document without recalculating them.  T o keep the size of the Github repository to
+reasonable levels, I do not include model results in the repository.
+
+```{r}
+full_data <- full_data %>% select(-season, -dd, -Hour)
+gc()   # Trigger garbage collection
+
+```
+
+#An intitial GLS to test methods
+Here we fit a (four degree of freedom) sinusoidal relationship for time of day.
+This is a fairly straight forward way to include a periodic fit in a linear
+model.
+
+In essence, we fit the first few terms of a Taylor series to estimate a periodic
+function. We fit both sine and cosine terms because the (weighted) sum of those
+terms corresponds to a sine (cosine) function with arbitrary phase.  Fitting both
+terms allows the phase of the periodic function to vary, while fitting only
+linear terms.
+
+It is fairly easy to show that the four periodic functions used here are
+orthogonal, which avoids high correlations between terms and helps with
+model fitting.
+
+The first pair of sine and cosine functions fits a single wavelength over a 24
+hour period.  The second two terms fit two wavelengths over 24 hours. The sum
+allows the shape t odeviate somewhat from a simple sinusidal curve.  One could
+continue to add additional sine and cosine  terms at different periods or
+wavelengths to improve model fit, but it is really more sensible to just use
+GAMs, as we do in the next section.
+
+
+By calling corAR1() with no arguments, or with a form argument of 'frm = 1',
+with or without grouping variables, we are  fitting a model that estimates
+correlation coefficients between successive observations in the dataframe,
+ignoring any time stamps.  That is a reasonable approach, since we inserted NAs
+at any data gaps so pairs of observations on either side of  gap in data will
+not be included in estimation.
+
+Fitting a more correct model by using a form argument, such as 'form = ~
+datetime' tends to use even more memory.  Fitting a model with a grouping
+factor, such as 'form = ~ datetime | yyyy' or 'form = ~ 1 | yyyy' reduced memory
+demands.
+
+Without any grouping factor in the coAR1() call, the following model took about
+15 minutes to run on my home computer, but failed (while running out of memory)
+on my work computer.  With the grouping variable (as here), it runs quickly, in
+under two minutes.  By wrapping the gls function in system.time(), I get a
+record of how long each model took to run.
+
+```{r cache = TRUE}
+system.time(the_gls <- gls(co2 ~  Month +
+                 sin(((2*pi)/24)*hh) + cos(((2*pi)/24)*hh) +
+                 sin(((4*pi)/24)*hh) + cos(((4*pi)/24)*hh) +
+                 temp + sal + do,
+                 correlation=corAR1(form = ~ 1 | yyyy), data = full_data,
+                 na.action = na.exclude, method='ML'))
+summary(the_gls)
+```
+
+```{r}
+the_gls <- readRDS('results/GLS.rds')
+coef(the_gls)
+```
+
+
+# Informal plot of the time of day factor.
+```{r}
+(terms <- coef(the_gls)[13:16])
+hh = 1:24
+vv =   terms[1] * sin(((2 * pi)/24) * hh) + 
+       terms[1] * cos(((2 * pi)/24) * hh) +
+       terms[1] * sin(((4 * pi)/24) * hh) +
+       terms[1] * cos(((4 * pi)/24) * hh)
+plot(hh,vv, type = 'l')
+```
+
+
+It is not very satisfying to have such a large "lump" in the middle of the day.
+That suggests a four term sinusoidal fit is inadequate o that we have wide
+(unreported here) error bands around the sinusoidal fit.
+```{r}
+saveRDS(the_gls, 'results/GLS.rds')
+rm(the_gls)
+gc()
+```
+
+# An initial GAM, with only linear terms on the predictors
+This took a bit over half an hour on my home computer without the grouping variable, and again failed on my work computer.  With the grouping variable, it takes a bit less than five minutes. 
+```{r}
+system.time(the_gam <- gamm(co2 ~  Month +
+                 s(hh, bs="cc") +
+                 temp + sal + do,
+                 correlation=corAR1(form = ~ 1 | yyyy), data = full_data,
+                 na.action = na.exclude, method='ML'))
+```
+
+GAMMs inherit both from LME and from GAM objects.  Results of can therefore be examined both via the underlying LME and the GAM components.  The GAM model output is slightly simpler, but provides less info on correlation structure, including the estimate of the magnitude of the AR1 term. 
+```{r}
+summary(the_gam$lme)
+```
+*  The estimated autocorrelation between successive observations is 0.95! 
+*  The month by month estimates are negatively correlated with the  intercept.
+*  In the current model parameterization, the month of January is the base case,
+and thus represented by the intercept, while the "month" parameters shown in the
+LME output are deviations from the intercept.
+*  This model suggests a moderate seasonal pattern, with lowest CO~2~ values in
+late spring, but seasonal differences among other months rather subdued.
+
+```{r}
+summary(the_gam$gam)
+```
+
+One nice feature of these GAMS is that you can visually inspect the non-linear terms included in the GAM component of the model with a simple call to plot().  here there is only one non-linear (smoothed) term , the diurnal pattern of CO~2~.  
+
+```{r}
+plot(the_gam$gam)
+```
+
+The timestamp used here is in UTC, so it does not correspond to time of day in
+Maine.  In fact, the time in these data is off by 4 hours from local standard
+time and five hours from local daylight savings time.
+
+(For more detail on dealing with time stamps while importing data, see the
+analyses of these data prepared for the CBEP State of the Bay Report. We don't
+bother to convert the time units here.)
+
+When it is 4:00 AM at Greenwich, it is midnight in Maine, so those results
+suggest our highest pCO2 tends to occur slightly after midnight (local time)
+with levels dropping throughout the day, reaching a minimum in late
+afternoon.
+
+It's worth wondering if the residuals of this model retain significant autocorrelation.
+```{r}
+acf(resid(the_gam$lme), main = 'GLS Residuals', na.action= na.pass)
+pacf(resid(the_gam$lme), main = 'GLS Residuals', na.action= na.pass)
+```
+They do.  Some periodic structure remains with a roughly 12 or 24 hour period. That is an indication that we have not yet captured all the structure in this time series. We should interpret model results wit ha certain amount of caution.
+
+The high partial autocorrelation at period 1 is expected, as the model does not REMOVE the AR1 term. It  only accounts for it in model fitting to provide more accurate estimates of standard errors.
+
+
+```{r}
+saveRDS(the_gam, 'results/GAM1.rds')
+```
+
+# Lower Degree of Freedom Models of Seasonality
+We face an embarrassment of possible model structures as we fit quasi-periodic
+structures to both diurnal and seasonal patterns. We can start to explore some
+of those possible structures by looking at lower degree of freedom ways of
+modeling seasonality.  her we fit a periodic cubic spline function to the month
+of the year.
+
+This also takes around five minutes to run.
+```{r}
+rm(the_gam)
+gc()
+system.time(the_gam_mm <- gamm(co2 ~  s(mm, bs='cc', k=5) +
+                 s(hh, bs="cc", k=5) +
+                 temp + sal + do,
+                 correlation=corAR1(form = ~ 1 | yyyy), data = full_data,
+                 na.action = na.exclude, method='ML'))
+```
+
+```{r}
+plot(the_gam_mm$gam)
+```
+Here we see a strong seasonal pattern, with a weaker smooth, nearly  sinusoidal patterns for time of day. The magnitude of this time of day term is similar to what wee  saw in the other GAMM, and perhaps half as strong as estimated by the  GLS model. The timing of the time of day term is shifted slightly, but only slightly.
+
+```{r}
+saveRDS(the_gam_mm, 'results/GAM1.mm.rds')
+```
+
+Thos model took just over five minutes to run.
+```{r}
+rm(the_gam_mm)
+gc()
+system.time(the_gam_doy <- gamm(co2 ~  s(doy, bs="cc", k=5) +
+                 s(hh, bs="cc", k=5) +
+                 temp + sal + do,
+                 correlation=corAR1(form = ~ 1 | yyyy), data = full_data,
+                 na.action = na.exclude, method='ML'))
+```
+
+
+```{r}
+plot(the_gam_doy$gam)
+```
+
+Those terms look remarkably similar to what we saw in the last model. Looking t teh model sumamries shows the similarities extend to estimates og the linear model terms. Functionally, the two models give similar results.
+```{r}
+saveRDS(the_gam_doy, 'results/GAM1.doy.1.rds')
+
+```
+
+We can also  fit a "joint" model in which time of year and time of day are fit
+as a two dimensional smoother.  This effectively allows the effect of time of
+year to vary by time of year.  It is, in effect, the smoother equivalent to an
+interaction term in a linear model.
+
+That model can be fit in several ways.  One way is to just jump right in and fit
+a two dimensional smoother, with  s(doy,hh, bs = "cc", k=5), but that does not
+allow assessment of whether the quasi-interaction term is necessary.  The $ti()$
+function is a "tensor product" specifically designed to allow terms to be
+decomposed to allow tests of importance of the joint smooth.
+
+This final model took just over ten minutes to run.
+```{r}
+rm(the_gam_doy)
+gc()
+system.time(the_gam_doy_2 <- gamm(co2 ~  ti(doy, bs="cc", k=5) + ti(hh, bs="cc", k=5) + ti(doy,hh, bs="cc", k=5) +
+                 temp + sal + do,
+                 correlation=corAR1(form = ~ 1 | yyyy), data = full_data,
+                 na.action = na.exclude, method='ML'))
+
+```
+
+
+
+```{r}
+plot(the_gam_doy_2$gam)
+```
+
+The magnitude of the seasonal pattern has been reduced slightly, as some of the structure has been absorbed into the joint smooth.  The joint smoothing term (which tests as significantly significant if you look at the model summaries)  shows that the base diurnal patterns is substantially weakened during winter, and strengthened in late summer and fall.  However, we have relatively little winter data, so the strength of this pattern in winter is probably suspect.
+
+```{r}
+saveRDS(the_gam_doy_2, 'results/GAM1.doy.2.rds')
+
+```
+This analysis continues in a separate R Markdown document "Model Comparisons pCO2.Rmd".

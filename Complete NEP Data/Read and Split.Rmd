@@ -1,0 +1,37 @@
+---
+title: "Reading in data and splitting by NEP"
+output: html_notebook
+---
+
+# Introduction.
+This is a quick script to split the monstrously large OA data set into smaller
+pieces, with one file for each Waterbody. Some water bodies have two sampling
+locations.
+
+# Import Packages
+```{r}
+library(readxl)
+```
+
+# Load Data
+This is a big file, and the import can be time consuming if there are any errors to report.
+```{r}
+all_data <- read_excel("Data_6.12.2020_v2_REG_DELIVER.xlsx", 
+    col_types = c("text", "text", "date", 
+        "skip", "numeric", "numeric", "numeric", 
+        "numeric", "numeric", "numeric", 
+        "skip", "skip", "skip", "skip", "skip"))
+```
+
+# Split and Save by NEP
+That file is so large that R has trouble with it.  Since we want to analyze by
+NEP anyway (mostly) let's split them into separate files.
+```{r}
+for(nep in unique(all_data$WaterBody)) {
+  fn <- paste0(nep, '_oa_data.csv')
+  part <- all_data[all_data$WaterBody==nep,]
+  write.csv(part, fn)
+}
+
+```
+

@@ -1,0 +1,116 @@
+---
+title: "Model comparisons"
+output: html_notebook
+---
+
+# Introduction 
+Because GAM models are large, I ran them in a separate Notebook, and saved them. Here I compare models, especially to gain insight onto data analysis choices and their potential impact.  
+
+# Load Libraries
+```{r}
+library(tidyverse)
+library(mgcv)
+library(GGally)
+
+#library(CBEPgraphics)
+```
+
+## Initialize fonts
+```{r warning=FALSE, message=FALSE}
+#load_cbep_fonts()
+```
+
+# Load model results
+```{r}
+the_gls  <- readRDS('GLS.corr.rds')
+monthf   <- readRDS('GAM1.corr.rds')
+monthv   <- readRDS('GAM1.mm.corr.rds')
+doyr   <- readRDS('GAM1.doy.1.corr.rds')
+doyr2   <- readRDS('GAM1.doy.2.corr.rds')
+```
+
+```{r}
+preds <- tibble(
+         gls = predict(the_gls),
+         monthf = predict(monthf$gam),
+         monthv = predict(monthv$gam),
+         doyr   = predict(doyr$gam),
+         doyr2  = predict(doyr2$gam))
+sum(!is.na(preds$monthf))
+```
+
+```{r}
+ggpairs(preds, progress=FALSE)
+```
+
+So, what this shows me is that the correlations are very high between models that handle the seasonal pattern consistently.  Even a "poor" correlation is largely linear with scatter around the predictions.
+
+
+# ANOVA based Analysis
+Traditional model selection procedures may be of little use here, since hte models are not strictly nested, but come comparisons may be informative anyway.  
+```{r}
+anova(monthv$lme, doyr$lme,  doyr2$lme,  monthf$lme)
+```
+Here, the best model is model that fits a mean to each month of the year. Second best is The full two dimensional smoother.
+
+```{r}
+resids <- tibble(
+         monthf = residuals(monthf$gam, type = 'response'),
+         monthv = residuals(monthv$gam, type = 'response'),
+         doyr = residuals(doyr$gam, type = 'response'),
+         doyr2 = residuals(doyr2$gam, type = 'response')) %>%
+  group_by(.) %>%
+  summarize_all(~sqrt(mean(.^2, na.rm=TRUE)))
+resids
+```
+So, curiously, by that metric, either of the month fitting algorithms was better than the day fitting models.
+
+```{r}
+summary(the_gls)
+```
+
+There is definitely some unresolved structure....
+
+## Seasonal Pattern
+```{r}
+plot(1:12,c(0,coef(the_gls)[2:12]), type = 'l')
+
+```
+##Daily Pattern
+```{r}
+cc <- coef(the_gls)[13:16]
+hh = 1:24
+vv =  cc[1] * sin(((2 * pi)/24) * hh) + 
+      cc[2] * cos(((2 * pi)/24) * hh) +
+      cc[3] * sin(((4 * pi)/24) * hh) +
+      cc[4] * cos(((4 * pi)/24) * hh)
+plot(hh,vv, type = 'l')
+```
+Note magnitude of daily pattern is about half of seasonal pattern.
+
+# Model fitting month using a smooth function
+```{r}
+anova(monthv$gam)
+```
+
+
+
+
+```{r}
+plot(monthv$gam)
+```
+
+```{r}
+plot(doyr$gam)
+```
+
+
+```{r}
+plot(doyr2$gam)
+```
+
+
+
+
+
+

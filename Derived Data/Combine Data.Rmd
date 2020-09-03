@@ -1,0 +1,77 @@
+---
+title: "Combine OA Data From Three NEPs"
+output: html_notebook
+---
+
+# Load Libraries
+```{r}
+library(tidyverse)
+library(readxl)
+library(CBEPgraphics)
+```
+
+```{r}
+load_cbep_fonts()
+```
+
+
+```{r}
+CBData <- read_csv("CascoBayOAData.csv") %>%
+  select(-SBE37_CON,
+         -SAMICO2_TEMP,
+         -FET_PHEXT
+         ) %>%
+  mutate(WaterBody = 'CB') %>%
+  rename(DateTime = datetime,
+         doy = doy,
+         Temp = SBE37_TEMP,
+         Salinity = SBE37_SALINITY,
+         CO2 = SAMI_CO2,
+         DO = Optode_O2,
+         pH = FET_PHINT,
+         Omega_a = `omega-a`,
+         Omega_c = `omega-c`,
+         Alkalinity = TA_calc,
+         DIC = DIC_calc
+  )
+```
+
+## Establish Folder References
+```{r}
+sibfldnm <- 'Original Data'
+parent   <- dirname(getwd())
+sibling  <- file.path(parent,sibfldnm)
+
+fn    <- 'TampaBay_CoastalBendaBays_ExampleData.csv'
+fpath <- file.path(sibling,fn)
+```
+
+# Load Data from Other NEPs
+```{r} 
+TBAndCBBData <- read_csv(fpath,
+                            col_types = cols(DO = col_double())) %>%
+  select(-TimeRoundMinute) %>%
+  mutate(DateTime = as.POSIXct(DateTime, format = '%m/%d/%Y %H:%M')) %>%
+  mutate(yyyy = as.numeric(format(DateTime, format = '%Y')),
+         mm   = as.numeric(format(DateTime, format = '%m')),
+         dd   = as.numeric(format(DateTime, format = '%d')),
+         doy  = as.numeric(format(DateTime, format = '%j')),
+         hh   = as.numeric(format(DateTime, format = '%H')))
+```
+
+# Combine Data
+```{r}
+the_data <- CBData %>%
+  select(WaterBody, DateTime, yyyy, mm, dd, doy, hh,
+         Temp, Salinity, CO2, DO, pH)
+
+the_data<- bind_rows(the_data, TBAndCBBData)
+
+```
+
+# Write Data File
+```{r}
+write.csv(the_data, 'THREE_NEP_OA_Data.csv')
+
+```
+
