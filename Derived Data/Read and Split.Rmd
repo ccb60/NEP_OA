@@ -1,0 +1,58 @@
+---
+title: "Reading in data and splitting by NEP"
+output:
+  html_document:
+    df_print: paged
+---
+
+# Introduction.
+This is a quick script to split the monstrously large OA data set from multiple 
+NEPs into smaller pieces, with one file for each Waterbody. Some water bodies
+have two sampling locations.
+
+# Import Packages
+```{r}
+library(readxl)
+```
+
+
+
+# Load Data
+This is a big file, and the import can be time consuming. Providing data column
+types can dramatically speed import.  If there ar any errors in the data
+types, either by mis-specification, or because the automatic file parser makes
+a mistake, import can slow to a crawl, as R reports import errors.
+
+# Load Data from Other NEPs
+## Establish Folder Reference
+```{r}
+sibfldnm <- 'Complete_NEP_Data'
+parent   <- dirname(getwd())
+sibling  <- file.path(parent,sibfldnm)
+
+fn    <- 'Data_6.12.2020_v2_REG_DELIVER.xlsx'
+fpath <- file.path(sibling,fn)
+```
+
+
+
+```{r}
+all_data <- read_excel(fpath, 
+    col_types = c("text", "text", "date", 
+        "skip", "numeric", "numeric", "numeric", 
+        "numeric", "numeric", "numeric", 
+        "skip", "skip", "skip", "skip", "skip"))
+```
+
+# Split and Save by NEP
+That file is so large that R has trouble with it.  Since we want to analyze by
+NEP anyway (mostly) let's split them into separate files.
+```{r}
+for(nep in unique(all_data$WaterBody)) {
+  fn <- paste0(nep, '_oa_data.csv')
+  part <- all_data[all_data$WaterBody==nep,]
+  write.csv(part, fn)
+}
+
+```
+

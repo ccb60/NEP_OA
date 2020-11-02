@@ -4,11 +4,11 @@
     src="https://www.cascobayestuary.org/wp-content/uploads/2014/04/logo_sm.jpg"
     style="position:absolute;top:10px;right:50px;" />
 
-Preliminary analysis of Ocean Acidification Data From Multiple National Estuary Programs
+# Preliminary analysis of Ocean Acidification Data From Multiple National Estuary Programs
 
 Casco Bay Estuary Partnership (CBEP) staff was involved with a project to look
 at carbonate chemistry parameters from several National Estuaries,including
-CBEP.  THe project we being led principally by Nick Rosenau, of the U.S.
+CBEP.  The project we being led principally by Nick Rosenau, of the U.S.
 Environmental Protection Agency, in Washington D.C.  The effort has produuced 
 a draft scientific paper, which will be submitted for publication soon
 (fall 2020).
@@ -27,40 +27,41 @@ science is documented and reproducible by others. The purpose of these archives
 is to release raw data and data analysis code whenever possible to allow others
 to review, critique, learn from, and build upon CBEP science.
 
-# Archive Structure
- CBEP data analysis repositories are usually divided into from two to four
- sub-folders.
+# Archive Structure.  
+- **Original Data**.  Original data, with a "DATA_SOURCES.md" file
+that documents data sources. *DATA IN THIS FOLDER IS AS ORIGINALLY PROVIDED.*
 
-- Original Data.  Original data, with a "DATA_SOURCES.md" or "READ ME.txt" file
-that documents data sources. *DATA IN THIS FOLDER IS AS ORIGINALLY PROVIDED.* 
+- **Complete NEP Data** Additional Original data, with a "DATA_SOURCES.md" file
+that documents data sources. *DATA IN THIS FOLDER IS AS ORIGINALLY PROVIDED.*
 
 - **Derived Data**.  Data derived from the original raw data.  Includes R
 notebooks that embody data transformation and reorganization, along with CSV
 files containing data used elsewhere in the repository.
 
-- **Complete NEP Data**.  Contains data from all NEPs included in the study, as well
-as code to separate ehat file into smaller files, and a long R Markdown
-file documenting our current understanding of temperature dependence of pCO~2~.
-The R Markdown document produced a PDF summary, also stored here.
+- **Temperature_Dependence**.  Contains a long R Markdown file documenting my
+current understanding of temperature dependence of pCO~2~. The R Markdown
+document produced a PDF summary, also stored here.
 
 - **Analysis**.  Contains R Notebooks proceeding through one approach to analysis
 of pCO~2~ data using generalized additive mixed models (GAMMs).  GAMMs are well
 suited to this problem, as they easily integrate non-linear terms, and properly
 address the high serial autocorrelation common in data from automated sensors.
-FIles presented here walk through a simplified GAMM analyses of pCO~2~ data. 
+Files presented here walk through a simplified GAMM analyses of pCO~2~ data. 
 The files are a subset of analyses we conducted. Other analyses follow similar
-methods, looking at differnet dependent variables (temperature corrected pCO~2~
+methods, looking at different dependent variables (temperature corrected pCO~2~
 and pH) and more complex models incorporating a richer set of nonlinear and 
-interaction terms.  Additional analysis examples can be found in our CBEP_OA
+interaction terms. Additional analysis examples can be found in our CBEP_OA
 Github repository.
 
 -  **Analysis_Daily**.  Contains files related to analysis of, or preparation of
 graphics from, daily summaries of hourly pCO~2~ and pH data.  Analysis and
-graphics focus on diurnal range and daily medians.
+graphics focus on diurnal range and daily medians. One file,
+`Diurnal Range Graphics All NEPs.Rmd` analyses data from all the NEPs with
+available data from the EPA study.
 
 # Summary of Data Sources
 Data was either derived from CBEP OA data analyzed as part of our 2020 State of
-the BAy report, or e-mailed to Curtis C. Bohlen by Nick Rosenau of the U.S.
+the Bay report, or e-mailed to Curtis C. Bohlen by Nick Rosenau of the U.S.
 Environmental Protection Agency (EPA), who was coordinating an effort to
 compare carbonate chemistry in National Estuary Waters.
 

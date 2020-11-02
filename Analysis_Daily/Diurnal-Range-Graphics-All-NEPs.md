@@ -33,14 +33,14 @@ different NEPs.
 library(tidyverse)
 ```
 
-    ## -- Attaching packages -------------------------------------------------------------------------------------- tidyverse 1.3.0 --
+    ## -- Attaching packages ------------------------------------------------------------------------------------- tidyverse 1.3.0 --
 
     ## v ggplot2 3.3.2     v purrr   0.3.4
-    ## v tibble  3.0.3     v dplyr   1.0.0
-    ## v tidyr   1.1.0     v stringr 1.4.0
+    ## v tibble  3.0.3     v dplyr   1.0.2
+    ## v tidyr   1.1.2     v stringr 1.4.0
     ## v readr   1.3.1     v forcats 0.5.0
 
-    ## -- Conflicts ----------------------------------------------------------------------------------------- tidyverse_conflicts() --
+    ## -- Conflicts ---------------------------------------------------------------------------------------- tidyverse_conflicts() --
     ## x dplyr::filter() masks stats::filter()
     ## x dplyr::lag()    masks stats::lag()
 
@@ -57,7 +57,7 @@ and code to work across different installations on different computers.
 You can just replace fpath with the path to the data file.
 
 ``` r
-sibfldnm <- 'Complete NEP Data'
+sibfldnm <- 'Complete_NEP_Data'
 parent   <- dirname(getwd())
 sibling  <- file.path(parent,sibfldnm)
 
@@ -265,7 +265,7 @@ software.
 The conceptually most complex piece of code is the code generating the Y
 axis label. We need to use “expression() to embed a Greek letter (”mu“,
 for micro) and formatting (a subscript) in the axis label. Because the
-axis is so long, we split also into two parts with the”atop()" function.
+axis is so long, we split it into two parts with the”atop()" function.
 
 ## First Layout
 
@@ -304,9 +304,10 @@ for (panel in 1:3) {
   
     facet_wrap(~WaterBody, ncol=3)
 
-  suppressWarnings(print(plt))   # print() is needed in the context of a for loop to output the graphic
+  suppressWarnings(print(plt))   # print() is needed to output the graphic
+                                 # in the context of a loop or function
   
-  # and save the plots
+  # and save the plots, generating file names on the fly.
   fn <- paste0('facetboxplotpco2cor3V1panel', panel, '.pdf')
   #ggsave(fn, width = 9, height = 2.5, device=cairo_pdf)
 }
