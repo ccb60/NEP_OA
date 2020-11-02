@@ -10,7 +10,7 @@ September 2, 2020
       - [Look Up Data](#look-up-data)
   - [Summarize Casco Bay Data by
     Days](#summarize-casco-bay-data-by-days)
-  - [Preliminary Graphics](#preliminary-graphics)
+  - [Graphics](#graphics)
       - [Boxplot](#boxplot)
       - [Diurnal Range by Median](#diurnal-range-by-median)
       - [Diurnal Range by Temperature and
@@ -35,14 +35,14 @@ methods.
 library(tidyverse)
 ```
 
-    ## -- Attaching packages -------------------------------------------------------------------------------------- tidyverse 1.3.0 --
+    ## -- Attaching packages ------------------------------------------------------------------------------------- tidyverse 1.3.0 --
 
     ## v ggplot2 3.3.2     v purrr   0.3.4
-    ## v tibble  3.0.3     v dplyr   1.0.0
-    ## v tidyr   1.1.0     v stringr 1.4.0
+    ## v tibble  3.0.3     v dplyr   1.0.2
+    ## v tidyr   1.1.2     v stringr 1.4.0
     ## v readr   1.3.1     v forcats 0.5.0
 
-    ## -- Conflicts ----------------------------------------------------------------------------------------- tidyverse_conflicts() --
+    ## -- Conflicts ---------------------------------------------------------------------------------------- tidyverse_conflicts() --
     ## x dplyr::filter() masks stats::filter()
     ## x dplyr::lag()    masks stats::lag()
 
@@ -118,7 +118,7 @@ daily_data <- all_data %>%
          )
 ```
 
-# Preliminary Graphics
+# Graphics
 
 ## Boxplot
 

@@ -30,7 +30,7 @@ You probably don't need this code.  This reflects how I organize the data and
 code to work across different installations on different computers.  You can
 just replace fpath with the path to the data file.
 ```{r relative_path}
-sibfldnm <- 'Complete NEP Data'
+sibfldnm <- 'Complete_NEP_Data'
 parent   <- dirname(getwd())
 sibling  <- file.path(parent,sibfldnm)
 
@@ -39,7 +39,7 @@ fpath <- file.path(sibling,fn)
 ```
 
 ## Look Up Data
-Here I read in data from the data file you sent me.  I skip "TimeRoundMinutes"
+Here I read in data from the data file sent to me.  I skip "TimeRoundMinutes"
 and the regression corrected versions of the data. Note that I specify the sheet
 holding the data.
 ```{r load_data} 
@@ -50,7 +50,12 @@ all_data <- read_excel(fpath, sheet = "Data_6.12.2020_v2_REG_DELIVER",
                        "skip", "skip", "skip", "skip", "skip"))
 ```
 
-This is potentially a huge data set, and R does not much like huge data sets.  Here I trim down to the variables we're most interested in:  pCO~2~, Temperature Corrected pCO~2~, and pH.  I could have done this in the prior code block, but I like to separate loading data (which is often common to several R Notebooks) and trimming down to the data I need (which is note-book specific). I also rename data columns, largely to save a few keystrokes.
+This is potentially a huge data set, and R does not much like huge data sets.
+Here I trim down to the variables we're most interested in:  pCO~2~, Temperature
+Corrected pCO~2~, and pH.  I could have done this in the prior code block, but I
+like to separate loading data (which is often common to several R Notebooks) and
+trimming down to the data I need (which is note-book specific). I also rename
+data columns, largely to save a few keystrokes.
 
 ```{r trim_data}
 all_data <- all_data %>%
@@ -67,8 +72,8 @@ so in the graphics I prepare below, I  use the range. (Note  that the built in
 R function "range" actually returns the minimum and maximum values, not the
 difference between them).
 
-For this notebook, I don't need all the statistics I explored, so I commented out
-several lines. You may want to revisit those possibilities.
+For this notebook, I don't need all the statistics I explored, so I commented
+out several lines. You may want to revisit those possibilities.
 
 It is worth remembering that the range is defined by extreme values, so it has a
 breakdown point of 1 (measurement).  A single wonky measurement will determine
@@ -144,6 +149,7 @@ plt <- daily_data %>%
   theme(panel.spacing = unit(1, "lines")) +
   
   facet_wrap(~WaterBody, ncol=3)
+plt
 ```
 
 To generate a "No Data" label on the SFB_15 sub-plot, I need to create an
@@ -187,7 +193,7 @@ composite them into a single graphic using graphic software.
 The conceptually most complex piece of code is the code generating the Y axis
 label.  We need to use "expression() to embed a Greek letter ("mu", for micro)
 and formatting (a subscript) in the axis label.  Because the axis is so long,
-we split also into two parts with the "atop()" function.
+we split it into two parts with the "atop()" function.
 
 ## First Layout
 ```{r three_panels_v_one, fig.width = 9, fig.height =2.5}
@@ -225,9 +231,10 @@ for (panel in 1:3) {
   
     facet_wrap(~WaterBody, ncol=3)
 
-  suppressWarnings(print(plt))   # print() is needed in the context of a for loop to output the graphic
+  suppressWarnings(print(plt))   # print() is needed to output the graphic
+                                 # in the context of a loop or function
   
-  # and save the plots
+  # and save the plots, generating file names on the fly.
   fn <- paste0('facetboxplotpco2cor3V1panel', panel, '.pdf')
   #ggsave(fn, width = 9, height = 2.5, device=cairo_pdf)
 }
