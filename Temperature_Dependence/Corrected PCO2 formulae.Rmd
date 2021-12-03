@@ -1,0 +1,93 @@
+---
+title: "Formulae for Temperature Corrected pCO2"
+author: Curtis C. Bohlen, Casco Bay Estuary Partnership
+output:
+  word_document:
+    toc: true
+    fig_width: 5
+    fig_height: 4
+---
+
+<img
+    src="https://www.cascobayestuary.org/wp-content/uploads/2014/04/logo_sm.jpg"
+    style="position:absolute;top:10px;right:50px;" />
+
+# Temperature Corrected pCO2 
+It turns out pCO~2~ is not a simple measure of the concentration (or activity)
+of CO~2~ in water, as it is strongly influenced by temperature.  Even at a fixed
+concentration of CO~2~ in seawater, there will be fluctuations in pCO~2~ due
+only to changes in temperature.
+
+Here is an informal argument for why this is true:  At higher temperatures,
+CO~2~ is less soluble in sea water.  At equilibrium, partitioning of CO~2~
+between atmosphere and ocean water will shift more CO~2~ to the atmosphere, thus
+raising the partial pressure of CO~2~ in the atmosphere that equilibrates with
+the CO~2~ in the water.
+
+More formally, carbon dioxide (gas) in the atmosphere is in thermodynamic
+equilibrium with [CO~2~] in the water, (where [CO~2~] here (by convention)
+refers to the sum of activities of CO~2~ and H~2~CO~3~ in solution.
+
+$$ CO_{2(g)}
+\stackrel {K_{0}} {\longleftrightarrow} 
+[CO_{2(aq.)}] $$ 
+
+
+Thus at equilibrium,  
+
+$$fCO_{2} = [CO_{2(aq.)}] / K_{0}$$  
+
+where $fCO_{2}$, the *fugacity* of CO~2~, is "virtually equal to the partial
+pressure." Unfortunately, $K_{0}$ is not constant, but depends on temperature
+and salinity. One semi-empirical model for that relationship is the following
+(From Weiss 1974 but also presented elsewhere):
+
+$$ ln~K_{0} = -60.2409 + 93.4517(100/T) + 23.3585 \times ln(T/100) + 
+S \times [0.023517 - 0.023656 \times (T/100) + 0.0047036 \times(T/100)^2] $$  
+
+(Note that temperatures need to be expressed in Kelvin)
+
+> Weiss, RF. 1974.  Carbon dioxide in water and seawater: the solubility of a 
+> non-ideal gas. Marine chemistry 2 (3), 203-215.
+
+# Takehashi et al. 2002 Relationships
+Here we follow a formula for calculating a "Temperature Corrected" pCO~2~, which
+is derived from methods in  Takehashi et al. 2002. The "temperature corrected"
+version adjusts for the thermodynamic effect of temperature on pCO~2~ just
+discussed.
+
+> Takahashi, Taro & Sutherland, Stewart & Sweeney, Colm & Poisson, Alain &
+> Metzl, Nicolas & Tilbrook, Bronte & Bates, Nicholas & Wanninkhof, Rik & Feely,
+> Richard & Chris, Sabine & Olafsson, Jon & Nojiri, Yukihiro. (2002). Global
+> sea-air CO2 flux based on climatological surface ocean pCO2, and seasonal
+> biological and temperature effects. Deep Sea Research Part II: Topical Studies
+> in Oceanography. 49. 1601-1622. 10.1016/S0967-0645(02)00003-6.
+
+Takahashi et al. 2002 used direct calculation of "temperature corrected" pCO~2~
+as a surrogate for changes in CO~2~ concentration, and conversely, estimates of
+"expected" thermal pCO~2~, as estimates of the magnitude of the fluctuations in
+pCO~2~ one would expect to see due to temperature alone, if there were no
+changes in [CO~2~].
+
+The Takehashi et al. 2002 equations are as follows:
+
+## "Expected pCO~2~" at Observed Temperature
+$$(pCO_{2} \textrm{ at }T_{obs}) = (pCO_{2})_{obs} \times exp(0.0423(T_{obs}- T_{mean}))$$
+
+## "Temperature Corrected" pCO~2~
+$$(pCO_{2} \textrm{ at }T_{mean}) = (pCO_{2})_{obs} \times exp(0.0423(T_{mean}- T_{obs})$$  
+
+This is approach addresses the thermal dependence of pCO~2~ by calculating what
+the observed pCO~2~ would have been at some reference temperature (rather than
+estimating [CO~2~] as Weiss did).  Here we use $12 ^{\circ} C$ as our reference
+temperature.
+
+Equations from Takehashi et al. 2002 do not LOOK similar to Weiss's equations,
+but they are nearly equivalent. At fixed salinity near full sea water, they
+essentially differ only by a constant.
+
+
+
+
+
+

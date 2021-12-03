@@ -1,8 +1,7 @@
 ---
 title: "Reading in data and splitting by NEP"
 output:
-  html_document:
-    df_print: paged
+  html_notebook
 ---
 
 # Introduction.
@@ -14,8 +13,6 @@ have two sampling locations.
 ```{r}
 library(readxl)
 ```
-
-
 
 # Load Data
 This is a big file, and the import can be time consuming. Providing data column
@@ -33,8 +30,6 @@ sibling  <- file.path(parent,sibfldnm)
 fn    <- 'Data_6.12.2020_v2_REG_DELIVER.xlsx'
 fpath <- file.path(sibling,fn)
 ```
-
-
 
 ```{r}
 all_data <- read_excel(fpath, 
@@ -55,4 +50,3 @@ for(nep in unique(all_data$WaterBody)) {
 }
 
 ```
-

@@ -1,8 +1,7 @@
 ---
 title: "Combine OA Data From Three NEPs"
 output:
-  html_document:
-    df_print: paged
+  html_notebook
 ---
 
 <img
@@ -10,10 +9,9 @@ output:
     style="position:absolute;top:10px;right:50px;" />
 
 
-# Waning
+# WaRning
 ** This code should be run after `Data-Review-And-Filetering.Rmd`, Which creates 
 the local QA/QC'd copy of the Casco Bay data, called `CascoBayOAData.csv`**
-
 
 # Load Libraries
 ```{r}

@@ -1,8 +1,7 @@
 ---
 title: "Review and Cleaning of Casco Bay OA Data"
 output:
-  html_document:
-    df_print: paged
+  html_notebook
 ---
 
 # Load Libraries
@@ -16,7 +15,6 @@ library(CBEPgraphics)
 load_cbep_fonts()
 ```
 
-
 # Load Data
 ## Establish Folder References
 ```{r}
@@ -25,7 +23,6 @@ parent   <- dirname(getwd())
 sibling  <- file.path(parent,sibfldnm)
 
 ```
-
 
 # Load Data
 From similar excel spreadsheets.
@@ -127,6 +124,7 @@ plt <- ggplot(the_data, aes(FET_PHINT, TA_calc, color = factor(yyyy))) +
    guides(colour = guide_legend(override.aes = list(alpha = 1, size = 1)))
 plt
 ```
+
 The most obvious problematic data (with very low alkalinity AND very low pH)
 are from 2015 and 2017.
 
@@ -141,11 +139,13 @@ plt <- ggplot(the_data, aes(SBE37_SALINITY, TA_calc, color = factor(yyyy))) +
   theme_cbep()
 plt
 ```
+
 Again, what jumps out are the points with low pH in 2017 and 2015.  Although
 the HIGH alkalinity observations from early in 2017 also look off-base.
 
 If we look at a plot of pH versus temperature, the same points jump out, with
 possibly some other low pH observations from 2016.
+
 ```{r}
 plt <- ggplot(the_data, aes(SBE37_TEMP, FET_PHINT, color = factor(yyyy))) +
   geom_point(alpha = 0.1) +
@@ -157,6 +157,7 @@ plt <- ggplot(the_data, aes(SBE37_TEMP, FET_PHINT, color = factor(yyyy))) +
   guides(colour = guide_legend(override.aes = list(alpha = 1)))
 plt
 ```
+
 I see no obvious way to eliminate the erroneous data.  There are "bad" data
 popping up several times.  It's mostly the 2017 data, but there may also be
 problematic data in 2015 and 2016.
@@ -171,6 +172,7 @@ plt <- the_data %>% filter(yyyy==2017, mm == 6, dd<18, dd>10) %>%
   xlab('Date')
 plt
 ```
+
 The pH drop off kicks in around June 14th. or 15th.
 
 So, things went odd around June 14th.
@@ -195,6 +197,7 @@ focusing on days with low calculated alkalinity.
 
 # Remove Questionable Data
 Remove questionable pH values and ALSO CO2Sys calculated values
+
 ```{r}
 d1 <- ISOdatetime(2015,8, 17,0,0, 0,'America/New_York')
 d2 <- ISOdatetime(2015,9,14,0,0, 0,'America/New_York')
@@ -221,6 +224,7 @@ plt <- ggplot(tt, aes(x=datetime, y=FET_PHINT)) +
 plt
 rm(tt)
 ```
+
 We are still left with some low values, but the  really wonky sudden pH changes are
 removed. 
 
